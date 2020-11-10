@@ -181,6 +181,3 @@ class ServerWorker:
 			+ '\n' + kind + '\n' + encod
 		connSocket = self.clientInfo['rtspSocket'][0]
 		connSocket.send(reply.encode())
-
-	def kind(self):
-		return 'Stream: RTP'
