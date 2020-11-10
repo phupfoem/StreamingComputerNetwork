@@ -28,7 +28,7 @@ class RtpPacket:
 
 		# marker 1 bits
 		header[1] = header[1] | marker << 7
-		# playload type = 26 (7 bits)		
+		# payload type = 26 (7 bits)
 		header[1] = header[1] | pt
 
 		# sequence number (16bits)

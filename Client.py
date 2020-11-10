@@ -18,6 +18,7 @@ class Client:
 	PLAY = 1
 	PAUSE = 2
 	TEARDOWN = 3
+	DESCRIBE = 5
 	
 	# Initiation..
 	def __init__(self, master, serveraddr, serverport, rtpport, filename):
@@ -60,6 +61,13 @@ class Client:
 		self.teardown["text"] = "Teardown"
 		self.teardown["command"] =  self.exitClient
 		self.teardown.grid(row=1, column=3, padx=2, pady=2)
+
+		#########################################
+		# Create Describe button
+		self.describe = Button(self.master, width=20, padx=3, pady=3)
+		self.describe["text"] = "Describe"
+		self.describe["command"] = self.describeMovie
+		self.describe.grid(row=1, column=4, padx=2, pady=2)
 		
 		# Create a label to display the movie
 		self.label = Label(self.master, height=19)
@@ -90,6 +98,12 @@ class Client:
 			self.playEvent.clear()
 			self.sendRtspRequest(self.PLAY)
 	
+	#################################
+	# describe
+	def describeMovie(self):
+		"""Describe button handler."""
+		self.sendRtspRequest(self.DESCRIBE)
+
 	def listenRtp(self):		
 		"""Listen for RTP packets."""
 		while True:
@@ -192,6 +206,21 @@ class Client:
 			# Keep track of the sent request.
 			# self.requestSent = ...
 			self.requestSent = self.TEARDOWN
+
+		#######################################
+		# Describe request
+		elif requestCode == self.DESCRIBE and not self.state == self.INIT:
+			# Update RTSP sequence number.
+			self.rtspSeq = self.rtspSeq + 1
+
+			# Write the RTSP request to be sent.
+			request = 'DESCRIBE ' + str(self.fileName) + ' RTSP/1.0\nCseq: ' + str(self.rtspSeq) + '\nSession: ' + str(self.sessionId)
+			# Keep track of the sent request.
+			self.requestSent = self.DESCRIBE
+
+
+		#######################################
+
 		else:
 			return
 		
@@ -251,7 +280,14 @@ class Client:
 						# self.state = ...
 						self.state = self.INIT
 						# Flag the teardownAcked to close the socket.
-						self.teardownAcked = 1 
+						self.teardownAcked = 1
+
+					################################
+					elif self.requestSent == self.DESCRIBE:
+						# keep old state
+						# print description
+						messagebox.showinfo('Description', lines[3] + '\n' + lines[4])
+
 	
 	def openRtpPort(self):
 		"""Open RTP socket binded to a specified port."""
