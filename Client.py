@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import messagebox
 from PIL import Image, ImageTk
 import socket, threading, sys, traceback, os
+import time
 
 from RtpPacket import RtpPacket
 
@@ -35,6 +36,12 @@ class Client:
 		self.teardownAcked = 0
 		self.connectToServer()
 		self.frameNbr = 0
+		self.receivedPacketNum = 0
+		self.displayedPacketNum = 0
+		self.receivedPacketTotalSize = 0
+		self.displayedPacketTotalSize = 0
+		self.playTime = 0
+		self.previousTimeStamp = -1
 		
 	def createWidgets(self):
 		"""Build GUI."""
@@ -80,6 +87,7 @@ class Client:
 	
 	def exitClient(self):
 		"""Teardown button handler."""
+		self.showStats()
 		self.sendRtspRequest(self.TEARDOWN)		
 		self.master.destroy() # Close the gui window
 		os.remove(CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT) # Delete the cache image from video
@@ -112,6 +120,10 @@ class Client:
 				if data:
 					rtpPacket = RtpPacket()
 					rtpPacket.decode(data)
+					# Update received packet
+					packetSize = len(data)
+					self.receivedPacketNum = self.receivedPacketNum + 1
+					self.receivedPacketTotalSize = self.receivedPacketTotalSize + packetSize
 					
 					currFrameNbr = rtpPacket.seqNum()
 					print("Current Seq Num: " + str(currFrameNbr))
@@ -119,6 +131,10 @@ class Client:
 					if currFrameNbr > self.frameNbr: # Discard the late packet
 						self.frameNbr = currFrameNbr
 						self.updateMovie(self.writeFrame(rtpPacket.getPayload()))
+						# Update displayed packet
+						self.displayedPacketNum = self.displayedPacketNum + 1
+						self.displayedPacketTotalSize = self.displayedPacketTotalSize + packetSize
+
 			except:
 				# Stop listening upon requesting PAUSE or TEARDOWN
 				if self.playEvent.isSet(): 
@@ -127,7 +143,7 @@ class Client:
 				# Upon receiving ACK for TEARDOWN request,
 				# close the RTP socket
 				if self.teardownAcked == 1:
-					self.rtpSocket.shutdown(socket.SHUT_RDWR)
+					#self.rtpSocket.shutdown(socket.SHUT_RDWR)
 					self.rtpSocket.close()
 					break
 					
@@ -267,20 +283,26 @@ class Client:
 						# self.state = ...
 						self.state = self.READY
 						# Open RTP port.
-						self.openRtpPort() 
+						self.openRtpPort()
 					elif self.requestSent == self.PLAY:
 						# self.state = ...
 						self.state = self.PLAYING
+						# Update timestamp
+						self.startTimer()
 					elif self.requestSent == self.PAUSE:
 						# self.state = ...
 						self.state = self.READY
 						# The play thread exits. A new thread is created on resume.
 						self.playEvent.set()
+						# Update playTime and reset timestamp
+						self.addPlayTime()
 					elif self.requestSent == self.TEARDOWN:
 						# self.state = ...
 						self.state = self.INIT
 						# Flag the teardownAcked to close the socket.
 						self.teardownAcked = 1
+						# Update playTime and reset timestamp
+						self.addPlayTime()
 
 					################################
 					elif self.requestSent == self.DESCRIBE:
@@ -314,3 +336,30 @@ class Client:
 			self.exitClient()
 		else: # When the user presses cancel, resume playing.
 			self.playMovie()
+
+	#Start timer
+	def startTimer(self):
+		self.previousTimeStamp = time.perf_counter()
+
+	#Add playTime
+	def addPlayTime(self):
+		# Update playTime and reset timestamp
+		if self.previousTimeStamp > 0:
+			self.playTime = self.playTime + (time.perf_counter() - self.previousTimeStamp)
+			self.previousTimeStamp = -1
+
+	#ShowStats function
+	def showStats(self):
+		self.addPlayTime()
+		totalPacketNum = self.frameNbr
+		if totalPacketNum != 0:
+			print("")
+			print("Statistics :")
+			print("Packets received : %d packets" % self.receivedPacketNum)
+			print("Packets displayed : %d packets" % self.displayedPacketNum)
+			print("Packets lost : %d packets" % (totalPacketNum - self.displayedPacketNum))
+			print("Play time : %fs" % self.playTime)
+			print("Bytes received : %d bytes" % self.receivedPacketTotalSize)
+			print("Bytes displayed : %d bytes" % self.displayedPacketTotalSize)
+			print("Video data rate : %f bytes per second" % (self.displayedPacketTotalSize/self.playTime))
+			print("Throughput : %f bits per second" % (self.receivedPacketTotalSize * 8 / self.playTime))
