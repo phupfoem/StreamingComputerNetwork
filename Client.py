@@ -79,6 +79,12 @@ class Client:
 		# Create a label to display the movie
 		self.label = Label(self.master, height=19)
 		self.label.grid(row=0, column=0, columnspan=4, sticky=W+E+N+S, padx=5, pady=5) 
+
+		# info display
+		self.info = StringVar()
+		self.infolabel = Label(self.master, textvariable=self.info)
+		self.infolabel.grid(row=0, column=5, columnspan=1, sticky=W+E+N, padx=5, pady=5)
+		self.info.set("here\nsample\nplace\nfor\nlabel")
 	
 	def setupMovie(self):
 		"""Setup button handler."""
@@ -353,13 +359,14 @@ class Client:
 		self.addPlayTime()
 		totalPacketNum = self.frameNbr
 		if totalPacketNum != 0:
-			print("")
-			print("Statistics :")
-			print("Packets received : %d packets" % self.receivedPacketNum)
-			print("Packets displayed : %d packets" % self.displayedPacketNum)
-			print("Packets lost : %d packets" % (totalPacketNum - self.displayedPacketNum))
-			print("Play time : %fs" % self.playTime)
-			print("Bytes received : %d bytes" % self.receivedPacketTotalSize)
-			print("Bytes displayed : %d bytes" % self.displayedPacketTotalSize)
-			print("Video data rate : %f bytes per second" % (self.displayedPacketTotalSize/self.playTime))
-			print("Throughput : %f bits per second" % (self.receivedPacketTotalSize * 8 / self.playTime))
+			strval = ""
+			strval += "\nStatistics :"
+			strval += "\nPackets received : %d packets" % self.receivedPacketNum
+			strval += "\nPackets displayed : %d packets" % self.displayedPacketNum
+			strval += "\nPackets lost : %d packets" % (totalPacketNum - self.displayedPacketNum)
+			strval += "\nPlay time : %fs" % self.playTime
+			strval += "\nBytes received : %d bytes" % self.receivedPacketTotalSize
+			strval += "\nBytes displayed : %d bytes" % self.displayedPacketTotalSize
+			strval += "\nVideo data rate : %f bytes per second" % (self.displayedPacketTotalSize/self.playTime)
+			strval += "\nThroughput : %f bits per second" % (self.receivedPacketTotalSize * 8 / self.playTime)
+			self.info.set(strval)
