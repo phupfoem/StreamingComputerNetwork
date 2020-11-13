@@ -68,6 +68,19 @@ class Client:
 		self.teardown["text"] = "Teardown"
 		self.teardown["command"] =  self.exitClient
 		self.teardown.grid(row=1, column=3, padx=2, pady=2)
+		
+		###########################################
+		# Create Fast Play button		
+		self.fplay = Button(self.master, width=20, padx=3, pady=3)
+		self.fplay["text"] = "Fast Play"
+		self.fplay["command"] = self.setupAndPlayMovie
+		self.fplay.grid(row=2, column=1, padx=2, pady=2)
+		
+		# Create Stop button
+		self.stop = Button(self.master, width=20, padx=3, pady=3)
+		self.stop["text"] = "Stop"
+		self.stop["command"] =  self.stopMovie
+		self.stop.grid(row=2, column=3, padx=2, pady=2)
 
 		#########################################
 		# Create Describe button
@@ -94,7 +107,7 @@ class Client:
 	def exitClient(self):
 		"""Teardown button handler."""
 		self.showStats()
-		self.sendRtspRequest(self.TEARDOWN)		
+		self.sendRtspRequest(self.TEARDOWN)
 		self.master.destroy() # Close the gui window
 		os.remove(CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT) # Delete the cache image from video
 
@@ -111,6 +124,38 @@ class Client:
 			self.playEvent = threading.Event()
 			self.playEvent.clear()
 			self.sendRtspRequest(self.PLAY)
+		
+	#####################################
+	# fast play
+	def setupAndPlayMovie(self):
+		if self.state == self.INIT:
+			self.sendRtspRequest(self.SETUP)
+			
+			while self.state != self.READY:
+				time.sleep(0.1)
+				
+			# Create a new thread to listen for RTP packets
+			threading.Thread(target=self.listenRtp).start()
+			self.playEvent = threading.Event()
+			self.playEvent.clear()
+			self.sendRtspRequest(self.PLAY)
+		elif self.state == self.READY:
+			# Create a new thread to listen for RTP packets
+			threading.Thread(target=self.listenRtp).start()
+			self.playEvent = threading.Event()
+			self.playEvent.clear()
+			self.sendRtspRequest(self.PLAY)
+			
+	# stop
+	def stopMovie(self):
+		"""Stop button handler."""
+		self.playEvent.clear()
+		self.sendRtspRequest(self.PLAY)
+		
+		while self.state != self.PLAYING:
+				time.sleep(0.1)
+				
+		self.sendRtspRequest(self.PAUSE)
 	
 	#################################
 	# describe
