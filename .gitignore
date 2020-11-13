@@ -3,6 +3,7 @@
 
 # spyder
 .spyproject
+*.jpg
 
 # spec
 *.pdf
