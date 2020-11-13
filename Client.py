@@ -387,7 +387,10 @@ class Client:
 					elif self.requestSent == self.DESCRIBE:
 						# keep old state
 						# print description
-						messagebox.showinfo('Description', lines[3] + '\n' + lines[4])
+						for i in lines[3:]:
+							print(i)
+						desc = lines[7][2:] + "\n" + lines[8]
+						messagebox.showinfo('Description', desc)
 
 	
 	def openRtpPort(self):
