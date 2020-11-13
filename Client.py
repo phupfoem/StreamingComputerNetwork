@@ -20,6 +20,7 @@ class Client:
 	PAUSE = 2
 	TEARDOWN = 3
 	DESCRIBE = 5
+	STOP = 6
 	
 	# Initiation..
 	def __init__(self, master, serveraddr, serverport, rtpport, filename):
@@ -73,7 +74,7 @@ class Client:
 		# Create Fast Play button		
 		self.fplay = Button(self.master, width=20, padx=3, pady=3)
 		self.fplay["text"] = "Fast Play"
-		self.fplay["command"] = self.setupAndPlayMovie
+		self.fplay["command"] = self.setupAndPlay
 		self.fplay.grid(row=2, column=1, padx=2, pady=2)
 		
 		# Create Stop button
@@ -127,35 +128,49 @@ class Client:
 		
 	#####################################
 	# fast play
-	def setupAndPlayMovie(self):
-		if self.state == self.INIT:
-			self.sendRtspRequest(self.SETUP)
-			
-			while self.state != self.READY:
-				time.sleep(0.1)
+	def setupAndPlay(self):
+		self.setupMovie()
+		
+		for i in range(5):
+			time.sleep(0.1)
+			if self.state == self.READY:
+				break
 				
-			# Create a new thread to listen for RTP packets
-			threading.Thread(target=self.listenRtp).start()
-			self.playEvent = threading.Event()
-			self.playEvent.clear()
-			self.sendRtspRequest(self.PLAY)
-		elif self.state == self.READY:
-			# Create a new thread to listen for RTP packets
-			threading.Thread(target=self.listenRtp).start()
-			self.playEvent = threading.Event()
-			self.playEvent.clear()
-			self.sendRtspRequest(self.PLAY)
+		self.playMovie()
 			
 	# stop
 	def stopMovie(self):
 		"""Stop button handler."""
-		self.playEvent.clear()
-		self.sendRtspRequest(self.PLAY)
-		
-		while self.state != self.PLAYING:
+		if self.state != self.INIT:
+			self.showStats()
+			
+			self.pauseMovie()
+			
+			for i in range(5):
+				if self.state == self.READY:
+					break
 				time.sleep(0.1)
 				
-		self.sendRtspRequest(self.PAUSE)
+			self.frameNbr = 0
+			self.receivedPacketNum = 0
+			self.displayedPacketNum = 0
+			self.receivedPacketTotalSize = 0
+			self.displayedPacketTotalSize = 0
+			self.playTime = 0
+			self.previousTimeStamp = -1
+			
+			# Create a new thread to listen for RTP packets
+			threading.Thread(target=self.listenRtp).start()
+			self.playEvent = threading.Event()
+			self.playEvent.clear()
+			self.sendRtspRequest(self.STOP)
+			
+			for i in range(5):
+				if self.state == self.PLAYING:
+					break
+				time.sleep(0.1)
+			
+			self.pauseMovie()
 	
 	#################################
 	# describe
@@ -273,7 +288,20 @@ class Client:
 			# Keep track of the sent request.
 			# self.requestSent = ...
 			self.requestSent = self.TEARDOWN
-
+			
+		###################################
+		# stop
+		elif requestCode == self.STOP and self.state != self.INIT:
+			# Update RTSP sequence number.
+			# ...
+			self.rtspSeq = self.rtspSeq + 1
+			# Write the RTSP request to be sent.
+			# request = ...
+			request = 'PLAY ' + str(self.fileName)  +  ' RTSP/1.0\nCSeq: ' + str(self.rtspSeq) + '\nRange: npt=0.0-\nSession: ' + str(self.sessionId)
+			# Keep track of the sent request.
+			# self.requestSent = ...
+			self.requestSent = self.PLAY
+			
 		#######################################
 		# Describe request
 		elif requestCode == self.DESCRIBE and not self.state == self.INIT:

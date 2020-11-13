@@ -33,7 +33,7 @@ class ServerWorker:
 	def recvRtspRequest(self):
 		"""Receive RTSP request from the client."""
 		connSocket = self.clientInfo['rtspSocket'][0]
-		while True:            
+		while True:			
 			data = connSocket.recv(256)
 			if data:
 				print("Data received:\n" + data.decode("utf-8"))
@@ -73,11 +73,14 @@ class ServerWorker:
 				# Get the RTP/UDP port from the last line
 				self.clientInfo['rtpPort'] = request[2].split(' ')[3]
 		
-		# Process PLAY request 		
+		# Process PLAY request	
 		elif requestType == self.PLAY:
 			if self.state == self.READY:
 				print("processing PLAY\n")
 				self.state = self.PLAYING
+				
+				if request[2].startswith("Range: npt=0"):
+					self.clientInfo['videoStream'] = VideoStream(filename)
 				
 				# Create a new socket for RTP/UDP
 				self.clientInfo["rtpSocket"] = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

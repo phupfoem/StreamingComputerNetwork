@@ -22,4 +22,7 @@ class VideoStream:
 		"""Get frame number."""
 		return self.frameNum
 	
+	def __del__(self): 
+		self.file.close()
+	
 	
