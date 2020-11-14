@@ -154,7 +154,9 @@ class Client:
 		if self.state != self.INIT:
 			self.showStats()
 			
-			self.pauseMovie()
+			
+			if self.state == self.PLAYING:
+				self.sendRtspRequest(self.PAUSE)
 			
 			for i in range(50):
 				if self.state == self.READY:
@@ -175,10 +177,10 @@ class Client:
 			self.playEvent.clear()
 			self.sendRtspRequest(self.STOP)
 			
-			for i in range(5):
+			for i in range(50):
 				if self.state == self.PLAYING:
 					break
-				time.sleep(0.1)
+				time.sleep(0.01)
 			
 			self.pauseMovie()
 	
