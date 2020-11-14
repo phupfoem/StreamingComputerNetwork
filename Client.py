@@ -98,7 +98,7 @@ class Client:
 		self.info = StringVar()
 		self.infolabel = Label(self.master, textvariable=self.info)
 		self.infolabel.grid(row=0, column=5, columnspan=1, sticky=W+E+N, padx=5, pady=5)
-		self.info.set("here\nsample\nplace\nfor\nlabel")
+		self.info.set("")
 	
 	def setupMovie(self):
 		"""Setup button handler."""
@@ -107,7 +107,6 @@ class Client:
 	
 	def exitClient(self):
 		"""Teardown button handler."""
-		self.showStats()
 		self.sendRtspRequest(self.TEARDOWN)
 		self.master.destroy() # Close the gui window
 		os.remove(CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT) # Delete the cache image from video
