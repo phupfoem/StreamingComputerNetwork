@@ -129,14 +129,25 @@ class Client:
 	#####################################
 	# fast play
 	def setupAndPlay(self):
-		self.setupMovie()
-		
-		for i in range(5):
-			time.sleep(0.1)
-			if self.state == self.READY:
-				break
-				
-		self.playMovie()
+		if self.state == self.READY:
+			# Create a new thread to listen for RTP packets
+			threading.Thread(target=self.listenRtp).start()
+			self.playEvent = threading.Event()
+			self.playEvent.clear()
+			self.sendRtspRequest(self.PLAY)
+		elif self.state == self.INIT:
+			self.sendRtspRequest(self.SETUP)
+			
+			for i in range(5):
+				if self.state == self.READY:
+					break
+				time.sleep(0.1)
+			
+			# Create a new thread to listen for RTP packets
+			threading.Thread(target=self.listenRtp).start()
+			self.playEvent = threading.Event()
+			self.playEvent.clear()
+			self.sendRtspRequest(self.PLAY)
 			
 	# stop
 	def stopMovie(self):
@@ -146,10 +157,10 @@ class Client:
 			
 			self.pauseMovie()
 			
-			for i in range(5):
+			for i in range(50):
 				if self.state == self.READY:
 					break
-				time.sleep(0.1)
+				time.sleep(0.01)
 				
 			self.frameNbr = 0
 			self.receivedPacketNum = 0
