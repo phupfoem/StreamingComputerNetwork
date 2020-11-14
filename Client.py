@@ -436,12 +436,14 @@ class Client:
 		if totalPacketNum != 0:
 			strval = ""
 			strval += "\nStatistics :"
+			strval += "\nTotal number of packets : %d" % totalPacketNum
 			strval += "\nPackets received : %d packets" % self.receivedPacketNum
 			strval += "\nPackets displayed : %d packets" % self.displayedPacketNum
 			strval += "\nPackets lost : %d packets" % (totalPacketNum - self.displayedPacketNum)
+			strval += "\nPackets lost rate : %.2f%%" % ((float) (totalPacketNum - self.displayedPacketNum) / totalPacketNum)
 			strval += "\nPlay time : %fs" % self.playTime
 			strval += "\nBytes received : %d bytes" % self.receivedPacketTotalSize
 			strval += "\nBytes displayed : %d bytes" % self.displayedPacketTotalSize
-			strval += "\nVideo data rate : %f bytes per second" % (self.displayedPacketTotalSize/self.playTime)
-			strval += "\nThroughput : %f bits per second" % (self.receivedPacketTotalSize * 8 / self.playTime)
+			strval += "\nVideo data rate : %.0f bits per second" % (self.displayedPacketTotalSize * 8/self.playTime)
+			strval += "\nThroughput : %.0f bits per second" % (self.receivedPacketTotalSize * 8 / self.playTime)
 			self.info.set(strval)
