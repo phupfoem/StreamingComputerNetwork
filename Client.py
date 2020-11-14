@@ -92,13 +92,13 @@ class Client:
 		
 		# Create a label to display the movie
 		self.label = Label(self.master, height=19)
-		self.label.grid(row=0, column=0, columnspan=4, sticky=W+E+N+S, padx=5, pady=5) 
+		self.label.grid(row=0, column=0, columnspan=3, sticky=W+E+N+S, padx=5, pady=5) 
 
 		# info display
 		self.info = StringVar()
 		self.infolabel = Label(self.master, textvariable=self.info)
-		self.infolabel.grid(row=0, column=5, columnspan=1, sticky=W+E+N, padx=5, pady=5)
-		self.info.set("")
+		self.infolabel.grid(row=0, column=3, columnspan=2, sticky=W+E+N, padx=5, pady=5)
+		self.info.set("Statistic not avaiable.")
 	
 	def setupMovie(self):
 		"""Setup button handler."""
@@ -128,12 +128,14 @@ class Client:
 	#####################################
 	# fast play
 	def setupAndPlay(self):
+		if self.state == self.PLAYING:
+			return
 		self.setupMovie()
 		
 		for i in range(5):
-			time.sleep(0.1)
 			if self.state == self.READY:
 				break
+			time.sleep(0.1)
 				
 		self.playMovie()
 			
