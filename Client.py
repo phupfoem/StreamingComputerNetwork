@@ -98,7 +98,7 @@ class Client:
 		self.info = StringVar()
 		self.infolabel = Label(self.master, textvariable=self.info)
 		self.infolabel.grid(row=0, column=5, columnspan=1, sticky=W+E+N, padx=5, pady=5)
-		self.info.set("here\nsample\nplace\nfor\nlabel")
+		self.info.set("")
 	
 	def setupMovie(self):
 		"""Setup button handler."""
@@ -107,7 +107,6 @@ class Client:
 	
 	def exitClient(self):
 		"""Teardown button handler."""
-		self.showStats()
 		self.sendRtspRequest(self.TEARDOWN)
 		self.master.destroy() # Close the gui window
 		os.remove(CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT) # Delete the cache image from video
@@ -398,7 +397,10 @@ class Client:
 					elif self.requestSent == self.DESCRIBE:
 						# keep old state
 						# print description
-						messagebox.showinfo('Description', lines[3] + '\n' + lines[4])
+						for i in lines[3:]:
+							print(i)
+						desc = lines[7][2:] + "\n" + lines[8]
+						messagebox.showinfo('Description', desc)
 
 	
 	def openRtpPort(self):
@@ -445,12 +447,14 @@ class Client:
 		if totalPacketNum != 0:
 			strval = ""
 			strval += "\nStatistics :"
+			strval += "\nTotal number of packets : %d" % totalPacketNum
 			strval += "\nPackets received : %d packets" % self.receivedPacketNum
 			strval += "\nPackets displayed : %d packets" % self.displayedPacketNum
 			strval += "\nPackets lost : %d packets" % (totalPacketNum - self.displayedPacketNum)
+			strval += "\nPackets lost rate : %.2f%%" % ((float) (totalPacketNum - self.displayedPacketNum) / totalPacketNum)
 			strval += "\nPlay time : %fs" % self.playTime
 			strval += "\nBytes received : %d bytes" % self.receivedPacketTotalSize
 			strval += "\nBytes displayed : %d bytes" % self.displayedPacketTotalSize
-			strval += "\nVideo data rate : %f bytes per second" % (self.displayedPacketTotalSize/self.playTime)
-			strval += "\nThroughput : %f bits per second" % (self.receivedPacketTotalSize * 8 / self.playTime)
+			strval += "\nVideo data rate : %.0f bits per second" % (self.displayedPacketTotalSize * 8/self.playTime)
+			strval += "\nThroughput : %.0f bits per second" % (self.receivedPacketTotalSize * 8 / self.playTime)
 			self.info.set(strval)

@@ -177,10 +177,18 @@ class ServerWorker:
 
 	def replyDescribe(self, name, seq):
 		"""Send RTSP reply and description to the client."""
-		kind = 'Stream: ' + 'RTP'
-		encod = 'Encoding: ' + name.split('.')[-1]
-
 		reply = 'RTSP/1.0 200 OK\nCSeq: ' + seq + '\nSession: ' + str(self.clientInfo['session']) \
-			+ '\n' + kind + '\n' + encod
+			+ "\n" + self.session_description(name)
 		connSocket = self.clientInfo['rtspSocket'][0]
 		connSocket.send(reply.encode())
+
+	def session_description(self, name):
+		descr = "v=0\r\n"
+		# o= usrname sessid sessver nettype addr unicast
+		descr += "o=- " + str(self.clientInfo["session"]) + " - IN " + socket.gethostbyname(socket.gethostname()) + " " + self.clientInfo['rtspSocket'][1][0] + "\r\n"
+		descr += "s= movie streaming" + "\r\n"
+		# m= media port client
+		descr += "m=video " + self.clientInfo['rtpPort'] + " " + name + "\r\n"
+		# infor: kind, encoding
+		descr += "i=Streaming kind:" + " RTP\nEncoding:" + name.split('.')[-1] + "\r\n"
+		return descr
