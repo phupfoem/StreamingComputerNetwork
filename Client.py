@@ -447,6 +447,9 @@ class Client:
 		self.addPlayTime()
 		totalPacketNum = self.frameNbr
 		if totalPacketNum != 0:
+			if self.displayedPacketNum > self.receivedPacketNum:
+				self.displayedPacketNum = self.receivedPacketNum
+				
 			strval = ""
 			strval += "\nStatistics :"
 			strval += "\nTotal number of packets : %d" % totalPacketNum
