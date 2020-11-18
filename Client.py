@@ -153,11 +153,8 @@ class Client:
 		"""Stop button handler."""
 		if self.state != self.INIT:
 			self.showStats()
-			
-			
 			if self.state == self.PLAYING:
 				self.sendRtspRequest(self.PAUSE)
-			
 			for i in range(50):
 				if self.state == self.READY:
 					break
@@ -213,6 +210,7 @@ class Client:
 						self.displayedPacketNum = self.displayedPacketNum + 1
 						self.displayedPacketTotalSize = self.displayedPacketTotalSize + packetSize
 
+					self.showStats()
 			except:
 				# Stop listening upon requesting PAUSE or TEARDOWN
 				if self.playEvent.isSet(): 
@@ -386,15 +384,13 @@ class Client:
 						# The play thread exits. A new thread is created on resume.
 						self.playEvent.set()
 						# Update playTime and reset timestamp
-						self.addPlayTime()
+						self.stopTimer()
+						self.showStats()
 					elif self.requestSent == self.TEARDOWN:
 						# self.state = ...
 						self.state = self.INIT
 						# Flag the teardownAcked to close the socket.
 						self.teardownAcked = 1
-						# Update playTime and reset timestamp
-						self.addPlayTime()
-
 					################################
 					elif self.requestSent == self.DESCRIBE:
 						# keep old state
@@ -435,21 +431,25 @@ class Client:
 	def startTimer(self):
 		self.previousTimeStamp = time.perf_counter()
 
+	#Stop timer
+	def stopTimer(self):
+		if self.previousTimeStamp > 0:
+			self.playTime = self.playTime + (time.perf_counter() - self.previousTimeStamp)
+			self.previousTimeStamp = -1
+
 	#Add playTime
 	def addPlayTime(self):
 		# Update playTime and reset timestamp
 		if self.previousTimeStamp > 0:
-			self.playTime = self.playTime + (time.perf_counter() - self.previousTimeStamp)
-			self.previousTimeStamp = -1
+			currentTimeStamp = time.perf_counter()
+			self.playTime = self.playTime + (currentTimeStamp - self.previousTimeStamp)
+			self.previousTimeStamp = currentTimeStamp
 
 	#ShowStats function
 	def showStats(self):
 		self.addPlayTime()
 		totalPacketNum = self.frameNbr
 		if totalPacketNum != 0:
-			if self.displayedPacketNum > self.receivedPacketNum:
-				self.displayedPacketNum = self.receivedPacketNum
-				
 			strval = ""
 			strval += "\nStatistics :"
 			strval += "\nTotal number of packets : %d" % totalPacketNum
