@@ -151,14 +151,13 @@ class Client:
 	# stop
 	def stopMovie(self):
 		"""Stop button handler."""
-		if self.state != self.INIT:
-			self.showStats()
+		if self.state != self.INIT and self.frameNbr != 0:
 			if self.state == self.PLAYING:
 				self.sendRtspRequest(self.PAUSE)
-			for i in range(50):
-				if self.state == self.READY:
-					break
-				time.sleep(0.01)
+				for i in range(50):
+					if self.state == self.READY:
+						break
+					time.sleep(0.01)
 				
 			self.frameNbr = 0
 			self.receivedPacketNum = 0
@@ -350,6 +349,10 @@ class Client:
 				break
 	
 	def parseRtspReply(self, data):
+		print("=======================")
+		print("Reply received :")
+		print(data)
+		print("=======================")
 		"""Parse the RTSP reply from the server."""
 		lines = data.split('\n')
 		seqNum = int(lines[1].split(' ')[1])
@@ -385,6 +388,9 @@ class Client:
 						self.playEvent.set()
 						# Update playTime and reset timestamp
 						self.stopTimer()
+						### Adding this line cause error
+						### press fastplay, or setup and then play
+						### while the movie is playing, press stop
 						self.showStats()
 					elif self.requestSent == self.TEARDOWN:
 						# self.state = ...
